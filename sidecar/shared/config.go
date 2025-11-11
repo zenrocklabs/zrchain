@@ -97,12 +97,44 @@ var (
 		NetworkMainnet:  "7nT8EmELLWf4gSiWxT2xH5oR6GsWRn3X6dv2AY2bpa53",
 	}
 
+	ZenBTCEventStoreProgramID = map[string]string{
+		NetworkLocalnet: "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
+		NetworkRegnet:   "",
+		NetworkDevnet:   "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
+		NetworkTestnet:  "9gzutLMGsSPboaaXuyK87Uu3VsM1mRgFTddsCEFWwYVV",
+		NetworkMainnet:  "7nT8EmELLWf4gSiWxT2xH5oR6GsWRn3X6dv2AY2bpa53",
+	}
+
+	ZenTPEventStoreProgramID = map[string]string{
+		NetworkLocalnet: "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
+		NetworkRegnet:   "",
+		NetworkDevnet:   "8jroAuLzFMzb1an5Rptf9Lx7JyTWFHMF1tA2ZW9Pymys",
+		NetworkTestnet:  "9gzutLMGsSPboaaXuyK87Uu3VsM1mRgFTddsCEFWwYVV",
+		NetworkMainnet:  "7nT8EmELLWf4gSiWxT2xH5oR6GsWRn3X6dv2AY2bpa53",
+	}
+
 	ZenZECMintAddress = map[string]string{
 		NetworkLocalnet: "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
 		NetworkRegnet:   "",
 		NetworkDevnet:   "3YMe7Bbus2rZiDR7ijRBhT6hNFvNwFnBgGEwxkw3L71g",
 		NetworkTestnet:  "H8X7ogzmLEuU36tHPFGFrMtFhHPNwbjuZW6FSGDgS9Jt",
 		NetworkMainnet:  "JDt9rRGaieF6aN1cJkXFeUmsy7ZE4yY3CZb8tVMXVroS",
+	}
+
+	ZenBTCMintAddress = map[string]string{
+		NetworkLocalnet: "", // TODO: Add zenBTC mint address for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "", // TODO: Add zenBTC mint address for devnet
+		NetworkTestnet:  "", // TODO: Add zenBTC mint address for testnet
+		NetworkMainnet:  "", // TODO: Add zenBTC mint address for mainnet
+	}
+
+	ROCKMintAddress = map[string]string{
+		NetworkLocalnet: "", // TODO: Add ROCK mint address for localnet
+		NetworkRegnet:   "",
+		NetworkDevnet:   "", // TODO: Add ROCK mint address for devnet
+		NetworkTestnet:  "", // TODO: Add ROCK mint address for testnet
+		NetworkMainnet:  "", // TODO: Add ROCK mint address for mainnet
 	}
 
 	SolRockProgramID = map[string]string{
@@ -125,7 +157,7 @@ var (
 
 	// VersionsRequiringCacheReset lists sidecar versions that need a one-time cache wipe.
 	// This protects against subtle state incompatibilities after major upgrades.
-	VersionsRequiringCacheReset = []string{"sturgeon_moon_r4"}
+	VersionsRequiringCacheReset = []string{"beaver_moon"}
 	MaxSupportedSolanaTxVersion = func() *uint64 { u := uint64(0); return &u }() // Solana transaction version 0
 )
 
@@ -172,7 +204,7 @@ const (
 	NTPServer                           = "time.google.com" // NTP server for time synchronization
 	TimeFormatPrecise                   = "15:04:05.00"     // Time format for precise logging (HH:MM:SS.ms)
 
-	SidecarVersionName = "sturgeon_moon_r4"
+	SidecarVersionName = "beaver_moon"
 
 	// OracleStateResetInterval controls how often (in UTC hours) the oracle
 	// should perform a full in-memory + cache reset cycle.

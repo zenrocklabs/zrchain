@@ -3,8 +3,10 @@ package keeper
 import (
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"github.com/Zenrock-Foundation/zrchain/v6/app/params"
 	sidecarapitypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
@@ -60,19 +62,42 @@ func (k *Keeper) processSolanaROCKMints(ctx sdk.Context, oracleData OracleData) 
 			if !ok {
 				return fmt.Errorf("nonce not found in oracleData.SolanaMintNonces for solParams.NonceAccountKey: %d", solParams.NonceAccountKey)
 			}
+
+			// Get current Solana counters for ROCK from chain state
+			assetKey := "ROCK"
+			counters, err := k.SolanaCounters.Get(ctx, assetKey)
+			if err != nil {
+				if errors.Is(err, collections.ErrNotFound) {
+					// Initialize counters if not found
+					counters = types.SolanaCounters{MintCounter: 0, RedemptionCounter: 0}
+				} else {
+					return fmt.Errorf("failed to get Solana counters for ROCK: %w", err)
+				}
+			}
+			nextMintCounter := counters.MintCounter + 1
+			k.Logger(ctx).Info("Read Solana mint counter from chain state",
+				"asset", assetKey,
+				"current_mint_counter", counters.MintCounter,
+				"next_mint_counter", nextMintCounter,
+			)
+
 			transaction, err := k.PrepareSolanaMintTx(ctx, &solanaMintTxRequest{
-				amount:            tx.Amount,
-				fee:               min(solParams.Fee, tx.Amount),
-				recipient:         tx.RecipientAddress,
-				nonce:             nonce,
-				fundReceiver:      fundReceiver,
-				programID:         solParams.ProgramId,
-				mintAddress:       solParams.MintAddress,
-				feeWallet:         solParams.FeeWallet,
-				nonceAccountKey:   solParams.NonceAccountKey,
-				nonceAuthorityKey: solParams.NonceAuthorityKey,
-				signerKey:         solParams.SignerKeyId,
-				rock:              true,
+				amount:              tx.Amount,
+				fee:                 min(solParams.Fee, tx.Amount),
+				recipient:           tx.RecipientAddress,
+				nonce:               nonce,
+				fundReceiver:        fundReceiver,
+				programID:           solParams.ProgramId,
+				mintAddress:         solParams.MintAddress,
+				feeWallet:           solParams.FeeWallet,
+				nonceAccountKey:     solParams.NonceAccountKey,
+				nonceAuthorityKey:   solParams.NonceAuthorityKey,
+				signerKey:           solParams.SignerKeyId,
+				multisigKey:         solParams.MultisigKeyAddress,
+				rock:                true,
+				eventStoreProgramID: solParams.EventStoreProgramId,
+				mintCounter:         nextMintCounter,
+				assetName:           "ROCK",
 			})
 			if err != nil {
 				return fmt.Errorf("PrepareSolRockMintTx: %w", err)
@@ -169,6 +194,25 @@ func (k *Keeper) processSolanaROCKMintEvents(ctx sdk.Context, oracleData OracleD
 				pendingMint.State = zentptypes.BridgeStatus_BRIDGE_STATUS_COMPLETED
 				if err := k.zentpKeeper.UpdateMint(ctx, pendingMint.Id, pendingMint); err != nil {
 					k.Logger(ctx).Error("error marking solROCK mint completed", "id", pendingMint.Id, "error", err)
+				}
+
+				// Increment the ROCK mint counter now that the mint is successful
+				assetKey := "ROCK"
+				counters, err := k.SolanaCounters.Get(ctx, assetKey)
+				if err != nil {
+					if !errors.Is(err, collections.ErrNotFound) {
+						k.Logger(ctx).Error("failed to get ROCK counters for increment", "error", err)
+					}
+				} else {
+					counters.MintCounter++
+					if err := k.SolanaCounters.Set(ctx, assetKey, counters); err != nil {
+						k.Logger(ctx).Error("failed to increment ROCK mint counter", "error", err)
+					} else {
+						k.Logger(ctx).Info("Incremented ROCK mint counter",
+							"asset", assetKey,
+							"new_mint_counter", counters.MintCounter,
+						)
+					}
 				}
 			}
 		}

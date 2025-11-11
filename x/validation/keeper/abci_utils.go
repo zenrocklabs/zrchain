@@ -16,11 +16,8 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"
-	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock"
-	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solrock/generated/rock_spl_token"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc"
 	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtc/generated/zenbtc_spl_token"
-	"github.com/Zenrock-Foundation/zrchain/v6/contracts/solzenbtclegacy"
 	sidecar "github.com/Zenrock-Foundation/zrchain/v6/sidecar/proto/api"
 	dcttypes "github.com/Zenrock-Foundation/zrchain/v6/x/dct/types"
 	zenbtctypes "github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
@@ -1942,20 +1939,107 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		)
 	}
 	if req.rock {
-		instructions = append(instructions, solrock.Wrap(
-			programID,
-			rock_spl_token.WrapArgs{
-				Value: req.amount,
-				Fee:   req.fee,
-			},
-			*signerPubKey,
-			mintKey,
-			feeKey,
-			feeWalletAta,
-			recipientPubKey,
-			receiverAta,
-		))
+		// ROCK now uses unified zenbtc bindings with event store
+		var multiSigKey solana.PublicKey
+		if req.multisigKey != "" {
+			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// ROCK uses zenTP keeper for params
+			multiSigKeyAddress := k.zentpKeeper.GetSolanaParams(ctx).MultisigKeyAddress
+			multiSigKey, err = solana.PublicKeyFromBase58(multiSigKeyAddress)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// ROCK uses event store
+		if req.eventStoreProgramID == "" {
+			return nil, fmt.Errorf("event store program id not provided for ROCK mint")
+		}
+
+		eventID := new(big.Int).SetUint64(req.mintCounter)
+		k.Logger(ctx).Info("Using Solana mint counter from chain state with event store",
+			"asset", "ROCK",
+			"programID", req.programID,
+			"mint_counter", req.mintCounter,
+			"event_id", eventID.String(),
+		)
+
+		eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Choose the correct Wrap function based on asset type
+		var wrapInstruction *zenbtc_spl_token.Instruction
+		var wrapErr error
+		switch req.assetName {
+		case "ZENBTC":
+			wrapInstruction, wrapErr = solzenbtc.WrapZenbtc2(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+		case "ROCK":
+			wrapInstruction, wrapErr = solzenbtc.WrapRock(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+		default:
+			// ZENZEC or other DCT assets use zenbtc_wrap seed
+			wrapInstruction, wrapErr = solzenbtc.WrapZenzec(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+		}
+		if wrapErr != nil {
+			return nil, wrapErr
+		}
+
+		instructions = append(instructions, wrapInstruction)
+
+		k.Logger(ctx).Info("Added ROCK wrap instruction to tx",
+			"asset", "ROCK",
+			"programID", programID.String(),
+			"amount", req.amount,
+			"fee", req.fee,
+			"signerPubKey", *signerPubKey,
+			"mintKey", mintKey.String(),
+			"multiSigKey", multiSigKey.String(),
+			"receiverPubKey", recipientPubKey.String(),
+			"mint_counter", req.mintCounter,
+		)
 	} else if req.zenbtc {
+		// All assets now use event store - no legacy path
 		var multiSigKey solana.PublicKey
 		if req.multisigKey != "" {
 			multiSigKey, err = solana.PublicKeyFromBase58(req.multisigKey)
@@ -1970,31 +2054,29 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			}
 		}
 
-		// ZENZEC (and other DCT assets) use event store, ZENBTC does not
-		useEventStore := req.assetName != "" && req.assetName != "ZENBTC"
+		if req.eventStoreProgramID == "" {
+			return nil, fmt.Errorf("event store program id not provided for %s mint", req.assetName)
+		}
 
-		var wrapInstruction solana.Instruction
+		eventID := new(big.Int).SetUint64(req.mintCounter)
+		k.Logger(ctx).Info("Using Solana mint counter from chain state with event store",
+			"asset", req.assetName,
+			"programID", req.programID,
+			"mint_counter", req.mintCounter,
+			"event_id", eventID.String(),
+		)
 
-		if useEventStore {
-			// ZENZEC and other DCT assets: use new bindings WITH event store
-			if req.eventStoreProgramID == "" {
-				return nil, fmt.Errorf("event store program id not provided for %s mint", req.assetName)
-			}
+		eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
+		if err != nil {
+			return nil, err
+		}
 
-			eventID := new(big.Int).SetUint64(req.mintCounter)
-			k.Logger(ctx).Info("Using Solana mint counter from chain state with event store",
-				"asset", req.assetName,
-				"programID", req.programID,
-				"mint_counter", req.mintCounter,
-				"event_id", eventID.String(),
-			)
-
-			eventStoreProgramPub, err := solana.PublicKeyFromBase58(req.eventStoreProgramID)
-			if err != nil {
-				return nil, err
-			}
-
-			wrapInstruction, err = solzenbtc.Wrap(
+		// Choose the correct Wrap function based on asset type
+		var wrapInstruction *zenbtc_spl_token.Instruction
+		var wrapErr error
+		switch req.assetName {
+		case "ZENBTC":
+			wrapInstruction, wrapErr = solzenbtc.WrapZenbtc2(
 				programID,
 				eventStoreProgramPub,
 				eventID,
@@ -2007,24 +2089,12 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 				recipientPubKey,
 				receiverAta,
 			)
-			if err != nil {
-				return nil, err
-			}
-			if err := ensureZenbtcWrapAccountsWritable(wrapInstruction, programID, eventStoreProgramPub, eventID); err != nil {
-				return nil, err
-			}
-		} else {
-			k.Logger(ctx).Info("Using legacy zenBTC wrap instruction without event store",
-				"asset", "ZENBTC",
-				"programID", req.programID,
-			)
-
-			wrapInstruction, err = solzenbtclegacy.Wrap(
+		case "ROCK":
+			wrapInstruction, wrapErr = solzenbtc.WrapRock(
 				programID,
-				solzenbtclegacy.WrapArgs{
-					Value: req.amount,
-					Fee:   req.fee,
-				},
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
 				*signerPubKey,
 				mintKey,
 				multiSigKey,
@@ -2033,16 +2103,30 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 				recipientPubKey,
 				receiverAta,
 			)
-			if err != nil {
-				return nil, err
-			}
+		default:
+			// ZENZEC or other DCT assets use zenbtc_wrap seed
+			wrapInstruction, wrapErr = solzenbtc.WrapZenzec(
+				programID,
+				eventStoreProgramPub,
+				eventID,
+				zenbtc_spl_token.WrapArgs{Value: req.amount, Fee: req.fee},
+				*signerPubKey,
+				mintKey,
+				multiSigKey,
+				feeKey,
+				feeWalletAta,
+				recipientPubKey,
+				receiverAta,
+			)
+		}
+		if wrapErr != nil {
+			return nil, wrapErr
 		}
 
 		instructions = append(instructions, wrapInstruction)
 
 		k.Logger(ctx).Info("Added wrap instruction to tx",
 			"asset", req.assetName,
-			"use_event_store", useEventStore,
 			"programID", programID.String(),
 			"amount", req.amount,
 			"fee", req.fee,
@@ -2053,6 +2137,7 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 			"feeWalletAta", feeWalletAta.String(),
 			"recipientWalletPubKey", recipientPubKey.String(),
 			"receiverAta", receiverAta.String(),
+			"mint_counter", req.mintCounter,
 		)
 	} else {
 		return nil, fmt.Errorf("neither rock nor zenbtc flag is set")
@@ -2071,49 +2156,6 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		return nil, err
 	}
 	return txBytes, nil
-}
-
-// ensureZenbtcWrapAccountsWritable forces key PDAs in the zenbtc wrap instruction to be writable.
-func ensureZenbtcWrapAccountsWritable(
-	inst solana.Instruction,
-	programID solana.PublicKey,
-	eventStoreProgramID solana.PublicKey,
-	eventID *big.Int,
-) error {
-	wrapInst, ok := inst.(*zenbtc_spl_token.Instruction)
-	if !ok || eventID == nil {
-		return nil
-	}
-
-	globalConfigPDA, err := solzenbtc.GetGlobalConfigPDA(programID)
-	if err != nil {
-		return fmt.Errorf("failed to derive zenbtc global config PDA: %w", err)
-	}
-
-	zenbtcWrapShard, err := solzenbtc.GetEventStoreZenbtcWrapShardPDA(eventStoreProgramID, eventID)
-	if err != nil {
-		return fmt.Errorf("failed to derive zenbtc wrap shard PDA: %w", err)
-	}
-
-	requiredAccounts := map[string]bool{
-		globalConfigPDA.String(): false,
-		zenbtcWrapShard.String(): false,
-	}
-
-	for _, meta := range wrapInst.Accounts() {
-		if _, ok := requiredAccounts[meta.PublicKey.String()]; ok {
-			meta.IsWritable = true
-			requiredAccounts[meta.PublicKey.String()] = true
-		}
-	}
-
-	for key, found := range requiredAccounts {
-		if !found {
-			return fmt.Errorf("wrap instruction missing required account %s", key)
-		}
-	}
-
-	return nil
 }
 
 func (k Keeper) retrieveSolanaNonces(goCtx context.Context) (map[uint64]*system.NonceAccount, error) {

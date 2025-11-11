@@ -643,7 +643,7 @@ func connectSolanaWithRetry(rpcAddress string, maxRetries int, delay time.Durati
 			return client, nil
 		},
 		func(client *solanarpc.Client, ctx context.Context) error {
-			_, err := client.GetHealth(ctx)
+			_, err := client.GetSlot(ctx, solanarpc.CommitmentFinalized)
 			return err
 		},
 	)
