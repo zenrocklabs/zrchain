@@ -8,6 +8,27 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Parse command line arguments
+for arg in "$@"; do
+    case $arg in
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo ""
+            echo "Options:"
+            echo "  -h, --help  Show this help message"
+            echo ""
+            echo "This script installs all development dependencies for zrchain."
+            echo "Go tool versions are pinned to what's specified in go.mod."
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
 # Logging functions
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -51,6 +72,7 @@ install_uv() {
     fi
 
     log_info "Installing uv..."
+
     if command_exists curl; then
         curl -LsSf https://astral.sh/uv/install.sh | sh
     elif command_exists wget; then
@@ -59,6 +81,7 @@ install_uv() {
         log_error "Neither curl nor wget is available. Please install one of them first."
         exit 1
     fi
+
     log_info "uv installed successfully"
 }
 
@@ -68,7 +91,7 @@ install_just() {
         log_info "just is already installed ($(just --version))"
         return 0
     fi
-    
+
     log_info "Installing just..."
     
     case "$OS" in
@@ -81,15 +104,12 @@ install_just() {
         linux)
             case "$PKG_MANAGER" in
                 apt)
-                    # Ubuntu/Debian - available in apt
                     install_package "just" "just"
                     ;;
                 dnf)
-                    # Fedora - available in dnf
                     install_package "just" "just"
                     ;;
                 yum)
-                    # RHEL/CentOS - may need EPEL repository
                     log_info "Attempting to install just via yum..."
                     if ! sudo yum install -y just; then
                         log_warn "just not found in yum repositories. Trying cargo install..."
@@ -97,11 +117,9 @@ install_just() {
                     fi
                     ;;
                 pacman)
-                    # Arch Linux - available in pacman
                     install_package "just" "just"
                     ;;
                 zypper)
-                    # openSUSE - available in zypper
                     install_package "just" "just"
                     ;;
                 *)
@@ -111,7 +129,7 @@ install_just() {
             esac
             ;;
     esac
-    
+
     log_info "just installed successfully ($(just --version))"
 }
 
@@ -183,32 +201,60 @@ install_package() {
     local package=$1
     local package_name=${2:-$package}
     
-    if command_exists "$package"; then
+    if command_exists "$package" && [ "$UPDATE_MODE" = false ]; then
         log_info "$package_name is already installed"
         return 0
     fi
     
-    log_info "Installing $package_name..."
+    if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+        log_info "Updating $package_name..."
+    else
+        log_info "Installing $package_name..."
+    fi
     
     case "$OS-$PKG_MANAGER" in
         macos-*)
-            brew install "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                brew upgrade "$package"
+            else
+                brew install "$package"
+            fi
             ;;
         linux-apt)
             sudo apt-get update
-            sudo apt-get install -y "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                sudo apt-get install -y --only-upgrade "$package"
+            else
+                sudo apt-get install -y "$package"
+            fi
             ;;
         linux-dnf)
-            sudo dnf install -y "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                sudo dnf upgrade -y "$package"
+            else
+                sudo dnf install -y "$package"
+            fi
             ;;
         linux-yum)
-            sudo yum install -y "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                sudo yum update -y "$package"
+            else
+                sudo yum install -y "$package"
+            fi
             ;;
         linux-pacman)
-            sudo pacman -S --noconfirm "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                sudo pacman -Syu --noconfirm "$package"
+            else
+                sudo pacman -S --noconfirm "$package"
+            fi
             ;;
         linux-zypper)
-            sudo zypper install -y "$package"
+            if [ "$UPDATE_MODE" = true ] && command_exists "$package"; then
+                sudo zypper update -y "$package"
+            else
+                sudo zypper install -y "$package"
+            fi
             ;;
         *)
             log_error "Unsupported OS/package manager combination: $OS-$PKG_MANAGER"
@@ -216,7 +262,11 @@ install_package() {
             ;;
     esac
     
-    log_info "$package_name installed successfully"
+    if [ "$UPDATE_MODE" = true ]; then
+        log_info "$package_name updated successfully"
+    else
+        log_info "$package_name installed successfully"
+    fi
 }
 
 # Install Go
@@ -225,9 +275,9 @@ install_go() {
         log_info "Go is already installed ($(go version))"
         return 0
     fi
-    
+
     log_info "Installing Go..."
-    
+
     case "$OS" in
         macos)
             if ! command_exists brew; then
@@ -246,7 +296,7 @@ install_go() {
             esac
             ;;
     esac
-    
+
     log_info "Go installed successfully ($(go version))"
 }
 
@@ -256,40 +306,70 @@ install_docker() {
         log_info "Docker is already installed ($(docker --version))"
         return 0
     fi
-    
+
     log_info "Installing Docker..."
     
     case "$OS" in
         macos)
-            log_warn "On macOS, Docker Desktop needs to be installed manually."
-            log_warn "Please visit: https://www.docker.com/products/docker-desktop"
-            log_warn "Or use: brew install --cask docker"
-            read -p "Press Enter to continue after installing Docker Desktop, or Ctrl+C to exit..."
+            if [ "$UPDATE_MODE" = true ] && command_exists docker; then
+                log_warn "On macOS, Docker Desktop should be updated manually."
+                log_warn "Please visit: https://www.docker.com/products/docker-desktop"
+                log_warn "Or use: brew upgrade --cask docker"
+            else
+                log_warn "On macOS, Docker Desktop needs to be installed manually."
+                log_warn "Please visit: https://www.docker.com/products/docker-desktop"
+                log_warn "Or use: brew install --cask docker"
+            fi
+            read -p "Press Enter to continue after installing/updating Docker Desktop, or Ctrl+C to exit..."
             ;;
         linux)
             case "$PKG_MANAGER" in
                 apt)
                     sudo apt-get update
-                    sudo apt-get install -y ca-certificates curl gnupg
-                    sudo install -m 0755 -d /etc/apt/keyrings
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-                    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-                    echo \
-                      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-                      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                    sudo apt-get update
-                    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+                    if [ "$UPDATE_MODE" = true ] && command_exists docker; then
+                        sudo apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io || {
+                            # If upgrade fails, ensure repo is set up and try again
+                            sudo apt-get install -y ca-certificates curl gnupg
+                            sudo install -m 0755 -d /etc/apt/keyrings
+                            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+                            echo \
+                              "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+                              sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                            sudo apt-get update
+                            sudo apt-get install -y --only-upgrade docker-ce docker-ce-cli containerd.io
+                        }
+                    else
+                        sudo apt-get install -y ca-certificates curl gnupg
+                        sudo install -m 0755 -d /etc/apt/keyrings
+                        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+                        echo \
+                          "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                          "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+                          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                        sudo apt-get update
+                        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+                    fi
                     ;;
                 dnf|yum)
-                    sudo "$PKG_MANAGER" install -y docker
-                    sudo systemctl start docker
-                    sudo systemctl enable docker
+                    if [ "$UPDATE_MODE" = true ] && command_exists docker; then
+                        sudo "$PKG_MANAGER" upgrade -y docker
+                    else
+                        sudo "$PKG_MANAGER" install -y docker
+                        sudo systemctl start docker
+                        sudo systemctl enable docker
+                    fi
                     ;;
                 pacman)
-                    sudo pacman -S --noconfirm docker
-                    sudo systemctl start docker
-                    sudo systemctl enable docker
+                    if [ "$UPDATE_MODE" = true ] && command_exists docker; then
+                        sudo pacman -Syu --noconfirm docker
+                    else
+                        sudo pacman -S --noconfirm docker
+                        sudo systemctl start docker
+                        sudo systemctl enable docker
+                    fi
                     ;;
                 *)
                     log_error "Automatic Docker installation not supported for $PKG_MANAGER"
@@ -297,13 +377,19 @@ install_docker() {
                     ;;
             esac
             
-            # Add current user to docker group
-            if [ "$OS" = "linux" ]; then
+            # Add current user to docker group (only if not already added)
+            if [ "$OS" = "linux" ] && ! groups "$USER" | grep -q docker; then
                 sudo usermod -aG docker "$USER"
                 log_warn "You may need to log out and back in for Docker group membership to take effect"
             fi
             ;;
     esac
+    
+    if [ "$UPDATE_MODE" = true ]; then
+        log_info "Docker updated successfully ($(docker --version))"
+    else
+        log_info "Docker installed successfully"
+    fi
 }
 
 # Install Go tools for protobuf generation
@@ -312,40 +398,51 @@ install_go_tools() {
         log_error "Go is not installed. Please run install_go first."
         exit 1
     fi
-    
-    log_info "Installing Go tools for protobuf generation..."
-    
-    # Array of tools to install - these match the tools declared in tools/tools.go
-    # Format: "binary_name|package_path"
+
+    log_info "Installing Go tools for protobuf generation (versions from go.mod)..."
+
+    # Extract exact versions from go.mod using go list -m
+    # This ensures we always install the versions pinned in go.mod
+    local protoc_go_grpc_version=$(go list -m google.golang.org/grpc/cmd/protoc-gen-go-grpc 2>/dev/null | awk '{print $2}')
+    local buf_version=$(go list -m github.com/bufbuild/buf 2>/dev/null | awk '{print $2}')
+    local cosmos_proto_version=$(go list -m github.com/cosmos/cosmos-proto 2>/dev/null | awk '{print $2}')
+    local gogoproto_version=$(go list -m github.com/cosmos/gogoproto 2>/dev/null | awk '{print $2}')
+    local grpc_gateway_v2_version=$(go list -m github.com/grpc-ecosystem/grpc-gateway/v2 2>/dev/null | awk '{print $2}')
+    local goimports_version=$(go list -m golang.org/x/tools 2>/dev/null | awk '{print $2}')
+    local protoc_go_version=$(go list -m google.golang.org/protobuf 2>/dev/null | awk '{print $2}')
+
+    # Array of tools to install - Format: "binary_name|package_path|version"
     local tools=(
-        "buf|github.com/bufbuild/buf/cmd/buf@latest"
-        "protoc-gen-go-pulsar|github.com/cosmos/cosmos-proto/cmd/protoc-gen-go-pulsar@latest"
-        "protoc-gen-gocosmos|github.com/cosmos/gogoproto/protoc-gen-gocosmos@latest"
-        "protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@latest"
-        "protoc-gen-openapiv2|github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest"
-        "goimports|golang.org/x/tools/cmd/goimports@latest"
-        "protoc-gen-go-grpc|google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
-        "protoc-gen-go|google.golang.org/protobuf/cmd/protoc-gen-go@latest"
+        "buf|github.com/bufbuild/buf/cmd/buf|${buf_version}"
+        "protoc-gen-go-pulsar|github.com/cosmos/cosmos-proto/cmd/protoc-gen-go-pulsar|${cosmos_proto_version}"
+        "protoc-gen-gocosmos|github.com/cosmos/gogoproto/protoc-gen-gocosmos|${gogoproto_version}"
+        "protoc-gen-openapiv2|github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2|${grpc_gateway_v2_version}"
+        "goimports|golang.org/x/tools/cmd/goimports|${goimports_version}"
+        "protoc-gen-go-grpc|google.golang.org/grpc/cmd/protoc-gen-go-grpc|${protoc_go_grpc_version}"
+        "protoc-gen-go|google.golang.org/protobuf/cmd/protoc-gen-go|${protoc_go_version}"
     )
-    
+
     for tool_entry in "${tools[@]}"; do
         local tool_name="${tool_entry%%|*}"
-        local tool_package="${tool_entry##*|}"
-        
-        if command_exists "$tool_name"; then
-            log_info "$tool_name is already installed"
+        local tool_package="${tool_entry#*|}"
+        tool_package="${tool_package%|*}"
+        local tool_version="${tool_entry##*|}"
+
+        if [ -z "$tool_version" ]; then
+            log_warn "$tool_name version not found in go.mod, skipping"
+            continue
+        fi
+
+        log_info "Installing $tool_name@$tool_version..."
+        go install "${tool_package}@${tool_version}"
+        if [ $? -eq 0 ]; then
+            log_info "$tool_name@$tool_version installed successfully"
         else
-            log_info "Installing $tool_name..."
-            go install "$tool_package"
-            if [ $? -eq 0 ]; then
-                log_info "$tool_name installed successfully"
-            else
-                log_error "Failed to install $tool_name"
-                exit 1
-            fi
+            log_error "Failed to install $tool_name@$tool_version"
+            exit 1
         fi
     done
-    
+
     # Verify GOPATH/bin is in PATH
     local gopath_bin="${GOPATH:-$HOME/go}/bin"
     if [[ ":$PATH:" != *":$gopath_bin:"* ]]; then
@@ -353,8 +450,8 @@ install_go_tools() {
         log_warn "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
         echo "  export PATH=\"\$PATH:$gopath_bin\""
     fi
-    
-    log_info "All Go tools installed successfully"
+
+    log_info "All Go tools installed successfully (matching go.mod versions)"
 }
 
 # Install build essentials (gcc, make, git)
@@ -372,7 +469,7 @@ install_build_essentials() {
             else
                 log_info "Xcode Command Line Tools already installed"
             fi
-            
+
             # Install make if needed
             if ! command_exists make; then
                 brew install make
@@ -381,6 +478,7 @@ install_build_essentials() {
         linux)
             case "$PKG_MANAGER" in
                 apt)
+                    sudo apt-get update
                     sudo apt-get install -y build-essential git
                     ;;
                 dnf|yum)
@@ -397,7 +495,7 @@ install_build_essentials() {
             esac
             ;;
     esac
-    
+
     log_info "Build essentials installed successfully"
 }
 
@@ -445,7 +543,7 @@ main() {
     
     install_docker
     echo
-    
+
     log_info "All dependencies installed successfully!"
     echo
     log_info "Next steps:"
