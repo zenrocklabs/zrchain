@@ -225,7 +225,7 @@ var _ = Describe("ZenBTC Solana flow:", func() {
 
 		latest, err := client.GetLatestBlockhash(env.Ctx, rpc.CommitmentProcessed)
 		Expect(err).ToNot(HaveOccurred())
-		unwrapInstruction, err := solzenbtc.Unwrap(
+		unwrapInstruction, err := solzenbtc.UnwrapZenbtc2(
 			programId,
 			eventStoreProgramId,
 			big.NewInt(1),

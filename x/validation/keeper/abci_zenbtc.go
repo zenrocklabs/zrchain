@@ -218,7 +218,7 @@ func (k *Keeper) processZenBTCMintsSolana(ctx sdk.Context, oracleData OracleData
 				zenbtc:              true,
 				eventStoreProgramID: solParams.EventStoreProgramId,
 				mintCounter:         nextMintCounter,
-				assetName:           "ZENBTC", // ZENBTC uses legacy bindings without event store
+				assetName:           "ZENBTC", // ZENBTC now uses eventstore with zenbtc2_wrap/unwrap seeds
 			}
 			transaction, err := k.PrepareSolanaMintTx(ctx, txPrepReq)
 			if err != nil {

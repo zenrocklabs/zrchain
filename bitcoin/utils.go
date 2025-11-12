@@ -121,6 +121,27 @@ func MergeHashes(left, right *chainhash.Hash) *chainhash.Hash {
 	return &mergedHash
 }
 
+// DecodePkScriptAddress extracts the human-readable address for the given pkScript,
+// normalising Zcash outputs to their transparent address format when necessary.
+func DecodePkScriptAddress(pkScript []byte, chainName string) (string, error) {
+	chain := ChainFromString(chainName)
+	if chain == nil {
+		return "", fmt.Errorf("unsupported chain %s", chainName)
+	}
+
+	_, addrs, _, err := txscript.ExtractPkScriptAddrs(pkScript, chain)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode address from script: %w", err)
+	}
+	if len(addrs) == 0 {
+		return "", fmt.Errorf("pkScript produced zero addresses")
+	}
+	if converted, ok := convertAddressForChain(addrs[0], chainName); ok {
+		return converted, nil
+	}
+	return addrs[0].String(), nil
+}
+
 func DecodeTX(rawTx []byte, chainName string) (*wire.MsgTx, error) {
 	reader := bytes.NewReader(rawTx)
 	var msgTx wire.MsgTx

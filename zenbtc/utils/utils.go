@@ -22,11 +22,11 @@ func ChainFromString(chainName string) *chaincfg.Params {
 
 	// Zcash chains - use Bitcoin params as base since Zcash is a Bitcoin fork
 	// The actual Zcash-specific parameters (like Sapling, etc.) are handled by the Zcash proxy
-	case "zcash-mainnet":
+	case "zcash-mainnet", "zcashmainnet", "zcash":
 		return &chaincfg.MainNetParams
-	case "zcash-testnet":
+	case "zcash-testnet", "zcashtestnet":
 		return &chaincfg.TestNet3Params
-	case "zcash-regtest", "zcash-regnet":
+	case "zcash-regtest", "zcashregtest", "zcash-regnet":
 		return &chaincfg.RegressionNetParams
 
 	default:

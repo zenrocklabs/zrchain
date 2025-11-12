@@ -14,20 +14,24 @@ import (
 
 const (
 	// EventStore program constants (must match on-chain program)
-	TARGET_EVENTS_PER_TYPE    = 1000
-	SHARD_SIZE_WRAP           = 100
-	SHARD_SIZE_UNWRAP         = 60
-	ZENBTC_WRAP_SHARD_COUNT   = 10
-	ZENBTC_UNWRAP_SHARD_COUNT = 17
-	ROCK_WRAP_SHARD_COUNT     = 10
-	ROCK_UNWRAP_SHARD_COUNT   = 17
+	TARGET_EVENTS_PER_TYPE     = 1000
+	SHARD_SIZE_WRAP            = 100
+	SHARD_SIZE_UNWRAP          = 60
+	ZENZEC_WRAP_SHARD_COUNT    = 10 // ZenZEC uses "zenbtc_wrap" seed
+	ZENZEC_UNWRAP_SHARD_COUNT  = 17 // ZenZEC uses "zenbtc_unwrap" seed
+	ZENBTC2_WRAP_SHARD_COUNT   = 10 // ZenBTC uses "zenbtc2_wrap" seed
+	ZENBTC2_UNWRAP_SHARD_COUNT = 17 // ZenBTC uses "zenbtc2_unwrap" seed
+	ROCK_WRAP_SHARD_COUNT      = 10
+	ROCK_UNWRAP_SHARD_COUNT    = 17
 
-	// PDA seeds
-	GLOBAL_CONFIG_SEED       = "global_config"
-	ZENBTC_WRAP_SHARD_SEED   = "zenbtc_wrap"
-	ZENBTC_UNWRAP_SHARD_SEED = "zenbtc_unwrap"
-	ROCK_WRAP_SHARD_SEED     = "rock_wrap"
-	ROCK_UNWRAP_SHARD_SEED   = "rock_unwrap"
+	// PDA seeds - IMPORTANT: These map to the Rust on-chain program seeds
+	GLOBAL_CONFIG_SEED        = "global_config"
+	ZENZEC_WRAP_SHARD_SEED    = "zenbtc_wrap"    // ZenZEC wrap events
+	ZENZEC_UNWRAP_SHARD_SEED  = "zenbtc_unwrap"  // ZenZEC unwrap events
+	ZENBTC2_WRAP_SHARD_SEED   = "zenbtc2_wrap"   // ZenBTC wrap events
+	ZENBTC2_UNWRAP_SHARD_SEED = "zenbtc2_unwrap" // ZenBTC unwrap events
+	ROCK_WRAP_SHARD_SEED      = "rock_wrap"
+	ROCK_UNWRAP_SHARD_SEED    = "rock_unwrap"
 
 	// Default EventStore program ID
 	DEFAULT_PROGRAM_ID = "2BZ3Vi9BurkVJv5wX8H9QSxQasDJ42FVFRNS4vXSYf22"
@@ -130,13 +134,25 @@ func (s RockTokenRedemptionSlot) IsInitialized() bool {
 }
 
 // Shard account structures
-type ZenbtcWrapShard struct {
+type ZenzecWrapShard struct {
 	ShardIndex   uint16                    `borsh_struct:"true"`
 	EventsStored uint64                    `borsh_struct:"true"`
 	Events       []TokensMintedWithFeeSlot `borsh_struct:"true"`
 }
 
-type ZenbtcUnwrapShard struct {
+type ZenzecUnwrapShard struct {
+	ShardIndex   uint16                      `borsh_struct:"true"`
+	EventsStored uint64                      `borsh_struct:"true"`
+	Events       []ZenbtcTokenRedemptionSlot `borsh_struct:"true"` // Same structure for ZenZEC
+}
+
+type Zenbtc2WrapShard struct {
+	ShardIndex   uint16                    `borsh_struct:"true"`
+	EventsStored uint64                    `borsh_struct:"true"`
+	Events       []TokensMintedWithFeeSlot `borsh_struct:"true"`
+}
+
+type Zenbtc2UnwrapShard struct {
 	ShardIndex   uint16                      `borsh_struct:"true"`
 	EventsStored uint64                      `borsh_struct:"true"`
 	Events       []ZenbtcTokenRedemptionSlot `borsh_struct:"true"`
@@ -156,8 +172,10 @@ type RockUnwrapShard struct {
 
 // AllEvents represents all events from all shards
 type AllEvents struct {
-	ZenbtcWrapEvents   []TokensMintedWithFee   `json:"zenbtc_wrap_events"`
-	ZenbtcUnwrapEvents []ZenbtcTokenRedemption `json:"zenbtc_unwrap_events"`
+	ZenzecWrapEvents   []TokensMintedWithFee   `json:"zenzec_wrap_events"`
+	ZenzecUnwrapEvents []ZenbtcTokenRedemption `json:"zenzec_unwrap_events"`
+	Zenbtc2WrapEvents  []TokensMintedWithFee   `json:"zenbtc2_wrap_events"`
+	Zenbtc2UnwrapEvents []ZenbtcTokenRedemption `json:"zenbtc2_unwrap_events"`
 	RockWrapEvents     []TokensMintedWithFee   `json:"rock_wrap_events"`
 	RockUnwrapEvents   []RockTokenRedemption   `json:"rock_unwrap_events"`
 }
@@ -321,15 +339,25 @@ func (c *Client) getAllShardAddresses(seed string, shardCount uint16) ([]solana.
 
 // GetAllEvents fetches all events from all shards in a single RPC call
 func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
-	// Get all shard addresses
-	zenbtcWrapAddresses, err := c.getAllShardAddresses(ZENBTC_WRAP_SHARD_SEED, ZENBTC_WRAP_SHARD_COUNT)
+	// Get all shard addresses for all asset types
+	zenzecWrapAddresses, err := c.getAllShardAddresses(ZENZEC_WRAP_SHARD_SEED, ZENZEC_WRAP_SHARD_COUNT)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get zenbtc wrap addresses: %w", err)
+		return nil, fmt.Errorf("failed to get zenzec wrap addresses: %w", err)
 	}
 
-	zenbtcUnwrapAddresses, err := c.getAllShardAddresses(ZENBTC_UNWRAP_SHARD_SEED, ZENBTC_UNWRAP_SHARD_COUNT)
+	zenzecUnwrapAddresses, err := c.getAllShardAddresses(ZENZEC_UNWRAP_SHARD_SEED, ZENZEC_UNWRAP_SHARD_COUNT)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get zenbtc unwrap addresses: %w", err)
+		return nil, fmt.Errorf("failed to get zenzec unwrap addresses: %w", err)
+	}
+
+	zenbtc2WrapAddresses, err := c.getAllShardAddresses(ZENBTC2_WRAP_SHARD_SEED, ZENBTC2_WRAP_SHARD_COUNT)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get zenbtc2 wrap addresses: %w", err)
+	}
+
+	zenbtc2UnwrapAddresses, err := c.getAllShardAddresses(ZENBTC2_UNWRAP_SHARD_SEED, ZENBTC2_UNWRAP_SHARD_COUNT)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get zenbtc2 unwrap addresses: %w", err)
 	}
 
 	rockWrapAddresses, err := c.getAllShardAddresses(ROCK_WRAP_SHARD_SEED, ROCK_WRAP_SHARD_COUNT)
@@ -343,9 +371,14 @@ func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
 	}
 
 	// Combine all addresses for batch fetch
-	allAddresses := make([]solana.PublicKey, 0, len(zenbtcWrapAddresses)+len(zenbtcUnwrapAddresses)+len(rockWrapAddresses)+len(rockUnwrapAddresses))
-	allAddresses = append(allAddresses, zenbtcWrapAddresses...)
-	allAddresses = append(allAddresses, zenbtcUnwrapAddresses...)
+	allAddresses := make([]solana.PublicKey, 0,
+		len(zenzecWrapAddresses)+len(zenzecUnwrapAddresses)+
+			len(zenbtc2WrapAddresses)+len(zenbtc2UnwrapAddresses)+
+			len(rockWrapAddresses)+len(rockUnwrapAddresses))
+	allAddresses = append(allAddresses, zenzecWrapAddresses...)
+	allAddresses = append(allAddresses, zenzecUnwrapAddresses...)
+	allAddresses = append(allAddresses, zenbtc2WrapAddresses...)
+	allAddresses = append(allAddresses, zenbtc2UnwrapAddresses...)
 	allAddresses = append(allAddresses, rockWrapAddresses...)
 	allAddresses = append(allAddresses, rockUnwrapAddresses...)
 
@@ -356,40 +389,41 @@ func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
 	}
 
 	result := &AllEvents{
-		ZenbtcWrapEvents:   make([]TokensMintedWithFee, 0),
-		ZenbtcUnwrapEvents: make([]ZenbtcTokenRedemption, 0),
-		RockWrapEvents:     make([]TokensMintedWithFee, 0),
-		RockUnwrapEvents:   make([]RockTokenRedemption, 0),
+		ZenzecWrapEvents:    make([]TokensMintedWithFee, 0),
+		ZenzecUnwrapEvents:  make([]ZenbtcTokenRedemption, 0),
+		Zenbtc2WrapEvents:   make([]TokensMintedWithFee, 0),
+		Zenbtc2UnwrapEvents: make([]ZenbtcTokenRedemption, 0),
+		RockWrapEvents:      make([]TokensMintedWithFee, 0),
+		RockUnwrapEvents:    make([]RockTokenRedemption, 0),
 	}
 
 	accountIndex := 0
 
-	// Process zenbtc wrap shards
-	for i := 0; i < len(zenbtcWrapAddresses); i++ {
+	// Process zenzec wrap shards
+	for i := 0; i < len(zenzecWrapAddresses); i++ {
 		if accountIndex >= len(accounts.Value) || accounts.Value[accountIndex] == nil {
 			accountIndex++
-			continue // Skip non-existent shards
+			continue
 		}
 
 		account := accounts.Value[accountIndex]
 		accountIndex++
 
-		// Skip account discriminator (8 bytes)
 		if len(account.Data.GetBinary()) < 8 {
 			continue
 		}
 
-		var shard ZenbtcWrapShard
+		var shard ZenzecWrapShard
 		err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:])
 		if err != nil {
-			continue // Skip failed deserializations
+			continue
 		}
 
-		result.ZenbtcWrapEvents = appendWrapEvents(result.ZenbtcWrapEvents, shard.Events)
+		result.ZenzecWrapEvents = appendWrapEvents(result.ZenzecWrapEvents, shard.Events)
 	}
 
-	// Process zenbtc unwrap shards
-	for i := 0; i < len(zenbtcUnwrapAddresses); i++ {
+	// Process zenzec unwrap shards
+	for i := 0; i < len(zenzecUnwrapAddresses); i++ {
 		if accountIndex >= len(accounts.Value) || accounts.Value[accountIndex] == nil {
 			accountIndex++
 			continue
@@ -402,13 +436,59 @@ func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
 			continue
 		}
 
-		var shard ZenbtcUnwrapShard
+		var shard ZenzecUnwrapShard
 		err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:])
 		if err != nil {
 			continue
 		}
 
-		result.ZenbtcUnwrapEvents = appendZenbtcUnwrapEvents(result.ZenbtcUnwrapEvents, shard.Events)
+		result.ZenzecUnwrapEvents = appendZenbtcUnwrapEvents(result.ZenzecUnwrapEvents, shard.Events)
+	}
+
+	// Process zenbtc2 wrap shards
+	for i := 0; i < len(zenbtc2WrapAddresses); i++ {
+		if accountIndex >= len(accounts.Value) || accounts.Value[accountIndex] == nil {
+			accountIndex++
+			continue
+		}
+
+		account := accounts.Value[accountIndex]
+		accountIndex++
+
+		if len(account.Data.GetBinary()) < 8 {
+			continue
+		}
+
+		var shard Zenbtc2WrapShard
+		err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:])
+		if err != nil {
+			continue
+		}
+
+		result.Zenbtc2WrapEvents = appendWrapEvents(result.Zenbtc2WrapEvents, shard.Events)
+	}
+
+	// Process zenbtc2 unwrap shards
+	for i := 0; i < len(zenbtc2UnwrapAddresses); i++ {
+		if accountIndex >= len(accounts.Value) || accounts.Value[accountIndex] == nil {
+			accountIndex++
+			continue
+		}
+
+		account := accounts.Value[accountIndex]
+		accountIndex++
+
+		if len(account.Data.GetBinary()) < 8 {
+			continue
+		}
+
+		var shard Zenbtc2UnwrapShard
+		err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:])
+		if err != nil {
+			continue
+		}
+
+		result.Zenbtc2UnwrapEvents = appendZenbtcUnwrapEvents(result.Zenbtc2UnwrapEvents, shard.Events)
 	}
 
 	// Process rock wrap shards
@@ -457,11 +537,18 @@ func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
 		result.RockUnwrapEvents = appendRockUnwrapEvents(result.RockUnwrapEvents, shard.Events)
 	}
 
-	sortWrapEventSlice(result.ZenbtcWrapEvents)
-	result.ZenbtcWrapEvents = dedupWrapEventSlice(result.ZenbtcWrapEvents)
+	// Sort and dedup all event types
+	sortWrapEventSlice(result.ZenzecWrapEvents)
+	result.ZenzecWrapEvents = dedupWrapEventSlice(result.ZenzecWrapEvents)
 
-	sortZenbtcUnwrapEventSlice(result.ZenbtcUnwrapEvents)
-	result.ZenbtcUnwrapEvents = dedupZenbtcUnwrapEventSlice(result.ZenbtcUnwrapEvents)
+	sortZenbtcUnwrapEventSlice(result.ZenzecUnwrapEvents)
+	result.ZenzecUnwrapEvents = dedupZenbtcUnwrapEventSlice(result.ZenzecUnwrapEvents)
+
+	sortWrapEventSlice(result.Zenbtc2WrapEvents)
+	result.Zenbtc2WrapEvents = dedupWrapEventSlice(result.Zenbtc2WrapEvents)
+
+	sortZenbtcUnwrapEventSlice(result.Zenbtc2UnwrapEvents)
+	result.Zenbtc2UnwrapEvents = dedupZenbtcUnwrapEventSlice(result.Zenbtc2UnwrapEvents)
 
 	sortWrapEventSlice(result.RockWrapEvents)
 	result.RockWrapEvents = dedupWrapEventSlice(result.RockWrapEvents)
@@ -472,9 +559,9 @@ func (c *Client) GetAllEvents(ctx context.Context) (*AllEvents, error) {
 	return result, nil
 }
 
-// GetZenbtcWrapEvents fetches only zenbtc wrap events
+// GetZenbtcWrapEvents fetches only zenbtc2 wrap events (for ZenBTC)
 func (c *Client) GetZenbtcWrapEvents(ctx context.Context) ([]TokensMintedWithFee, error) {
-	addresses, err := c.getAllShardAddresses(ZENBTC_WRAP_SHARD_SEED, ZENBTC_WRAP_SHARD_COUNT)
+	addresses, err := c.getAllShardAddresses(ZENBTC2_WRAP_SHARD_SEED, ZENBTC2_WRAP_SHARD_COUNT)
 	if err != nil {
 		return nil, err
 	}
@@ -490,7 +577,7 @@ func (c *Client) GetZenbtcWrapEvents(ctx context.Context) ([]TokensMintedWithFee
 			continue
 		}
 
-		var shard ZenbtcWrapShard
+		var shard Zenbtc2WrapShard
 		if err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:]); err == nil {
 			events = appendWrapEvents(events, shard.Events)
 		}
@@ -501,9 +588,38 @@ func (c *Client) GetZenbtcWrapEvents(ctx context.Context) ([]TokensMintedWithFee
 	return events, nil
 }
 
-// GetZenbtcUnwrapEvents fetches only zenbtc unwrap events with decoded Bitcoin addresses
+// GetZenzecWrapEvents fetches only zenzec wrap events (for ZenZEC)
+func (c *Client) GetZenzecWrapEvents(ctx context.Context) ([]TokensMintedWithFee, error) {
+	addresses, err := c.getAllShardAddresses(ZENZEC_WRAP_SHARD_SEED, ZENZEC_WRAP_SHARD_COUNT)
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := c.rpcClient.GetMultipleAccounts(ctx, addresses...)
+	if err != nil {
+		return nil, err
+	}
+
+	var events []TokensMintedWithFee
+	for _, account := range accounts.Value {
+		if account == nil || len(account.Data.GetBinary()) < 8 {
+			continue
+		}
+
+		var shard ZenzecWrapShard
+		if err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:]); err == nil {
+			events = appendWrapEvents(events, shard.Events)
+		}
+	}
+
+	sortWrapEventSlice(events)
+	events = dedupWrapEventSlice(events)
+	return events, nil
+}
+
+// GetZenbtcUnwrapEvents fetches only zenbtc2 unwrap events with decoded Bitcoin addresses (for ZenBTC)
 func (c *Client) GetZenbtcUnwrapEvents(ctx context.Context) ([]ZenbtcTokenRedemption, error) {
-	addresses, err := c.getAllShardAddresses(ZENBTC_UNWRAP_SHARD_SEED, ZENBTC_UNWRAP_SHARD_COUNT)
+	addresses, err := c.getAllShardAddresses(ZENBTC2_UNWRAP_SHARD_SEED, ZENBTC2_UNWRAP_SHARD_COUNT)
 	if err != nil {
 		return nil, err
 	}
@@ -519,7 +635,7 @@ func (c *Client) GetZenbtcUnwrapEvents(ctx context.Context) ([]ZenbtcTokenRedemp
 			continue
 		}
 
-		var shard ZenbtcUnwrapShard
+		var shard Zenbtc2UnwrapShard
 		if err := borsh.Deserialize(&shard, account.Data.GetBinary()[8:]); err == nil {
 			events = appendZenbtcUnwrapEvents(events, shard.Events)
 		}
@@ -595,12 +711,18 @@ func (c *Client) GetEventCounts(ctx context.Context) (map[string]int, error) {
 		return nil, err
 	}
 
+	total := len(allEvents.ZenzecWrapEvents) + len(allEvents.ZenzecUnwrapEvents) +
+		len(allEvents.Zenbtc2WrapEvents) + len(allEvents.Zenbtc2UnwrapEvents) +
+		len(allEvents.RockWrapEvents) + len(allEvents.RockUnwrapEvents)
+
 	return map[string]int{
-		"zenbtc_wrap":   len(allEvents.ZenbtcWrapEvents),
-		"zenbtc_unwrap": len(allEvents.ZenbtcUnwrapEvents),
-		"rock_wrap":     len(allEvents.RockWrapEvents),
-		"rock_unwrap":   len(allEvents.RockUnwrapEvents),
-		"total":         len(allEvents.ZenbtcWrapEvents) + len(allEvents.ZenbtcUnwrapEvents) + len(allEvents.RockWrapEvents) + len(allEvents.RockUnwrapEvents),
+		"zenzec_wrap":    len(allEvents.ZenzecWrapEvents),
+		"zenzec_unwrap":  len(allEvents.ZenzecUnwrapEvents),
+		"zenbtc2_wrap":   len(allEvents.Zenbtc2WrapEvents),
+		"zenbtc2_unwrap": len(allEvents.Zenbtc2UnwrapEvents),
+		"rock_wrap":      len(allEvents.RockWrapEvents),
+		"rock_unwrap":    len(allEvents.RockUnwrapEvents),
+		"total":          total,
 	}, nil
 }
 

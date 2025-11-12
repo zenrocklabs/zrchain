@@ -13,7 +13,6 @@ import (
 	treasurytypes "github.com/Zenrock-Foundation/zrchain/v6/x/treasury/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/x/zenbtc/types"
 	"github.com/Zenrock-Foundation/zrchain/v6/zenbtc/utils"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -91,11 +90,10 @@ func (k msgServer) checkChangeAddress(ctx context.Context, msg *types.MsgSubmitU
 	changeOutput := msgTX.TxOut[0]
 
 	// Extract and validate change address from Output 0
-	_, addrs, _, err := txscript.ExtractPkScriptAddrs(changeOutput.PkScript, chaincfg)
-	if err != nil || addrs == nil || len(addrs) != 1 {
-		return nil, fmt.Errorf("BTC change address invalid")
+	changeAddress, err := bitcoin.DecodePkScriptAddress(changeOutput.PkScript, msg.ChainName)
+	if err != nil {
+		return nil, fmt.Errorf("BTC change address invalid: %w", err)
 	}
-	changeAddress := addrs[0].String()
 
 	// Validate the change address against known change addresses
 	validChangeAddress := false
@@ -132,7 +130,6 @@ func (k msgServer) checkRedemptionTXCreator(ctx context.Context, msg *types.MsgS
 }
 
 func (k msgServer) verifyOutputsAgainstRedemptions(ctx context.Context, msg *types.MsgSubmitUnsignedRedemptionTx, msgTX *wire.MsgTx) error {
-	chaincfg := utils.ChainFromString(msg.ChainName)
 	req := &types.QueryRedemptionsRequest{
 		StartIndex: 0,
 		Status:     types.RedemptionStatus_UNSTAKED,
@@ -156,13 +153,13 @@ func (k msgServer) verifyOutputsAgainstRedemptions(ctx context.Context, msg *typ
 		outputIndex := uint64(i + 1) // Adjust index to correspond to TxOut slice
 
 		// Derive output address
-		_, addrs, _, err := txscript.ExtractPkScriptAddrs(output.PkScript, chaincfg)
-		if err != nil || addrs == nil || len(addrs) != 1 {
-			return fmt.Errorf("invalid output address at output index %d", outputIndex)
+		outputAddress, err := bitcoin.DecodePkScriptAddress(output.PkScript, msg.ChainName)
+		if err != nil {
+			return fmt.Errorf("invalid output address at output index %d: %w", outputIndex, err)
 		}
 
 		// Verify the output against redemptions
-		if err = k.verifyOutputInRedemptions(redemptions, addrs[0].String(), output.Value, msg.RedemptionIndexes[outputIndex]); err != nil {
+		if err = k.verifyOutputInRedemptions(redemptions, outputAddress, output.Value, msg.RedemptionIndexes[outputIndex]); err != nil {
 			return fmt.Errorf("invalid output %d in tx: %s, error: %w", outputIndex, hex.EncodeToString(msg.Txbytes), err)
 		}
 	}
