@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,4 +32,22 @@ func mustDecodeBase64(t *testing.T, in string) []byte {
 	out, err := base64.StdEncoding.DecodeString(in)
 	require.NoError(t, err)
 	return out
+}
+
+func TestDecodePkScriptAddress_ZcashTestnet(t *testing.T) {
+	pkScript, err := hex.DecodeString("76a91406bc25583ed24f07697f725d02c0298101e865ae88ac")
+	require.NoError(t, err)
+
+	addr, err := DecodePkScriptAddress(pkScript, "zcashtestnet")
+	require.NoError(t, err)
+	require.Equal(t, "tmAKxmvjss4dZYPbnwfpvjumgCwJCQp3Xxp", addr)
+}
+
+func TestDecodePkScriptAddress_ZcashMainnet(t *testing.T) {
+	pkScript, err := hex.DecodeString("76a91406bc25583ed24f07697f725d02c0298101e865ae88ac")
+	require.NoError(t, err)
+
+	addr, err := DecodePkScriptAddress(pkScript, "zcash-mainnet")
+	require.NoError(t, err)
+	require.Equal(t, "t1JVDT6FUUQ84Q9QMGwXBtF6vbxDNsjj4mH", addr)
 }
