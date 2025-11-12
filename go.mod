@@ -58,7 +58,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/gofuzz v1.2.2
-	github.com/gagliardetto/solana-go v1.11.0
+	github.com/gagliardetto/solana-go v1.12.0
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.4
@@ -189,6 +189,7 @@ require (
 	github.com/creachadair/tomledit v0.0.26 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
+	github.com/dave/jennifer v1.7.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
@@ -216,6 +217,7 @@ require (
 	github.com/felixge/fgprof v0.9.4 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/gagliardetto/anchor-go v1.0.0 // indirect
 	github.com/getsentry/sentry-go v0.29.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.12 // indirect
@@ -350,6 +352,10 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect

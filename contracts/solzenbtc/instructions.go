@@ -13,8 +13,8 @@ func Initialize(
 	args zenbtc_spl_token.InitializeArgs,
 	signer solana.PublicKey,
 	mint solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	globalConfigPDA, err := GetGlobalConfigPDA(programID)
 	if err != nil {
@@ -25,7 +25,7 @@ func Initialize(
 		return nil, err
 	}
 
-	instruction := zenbtc_spl_token.NewInitializeInstruction(
+	instruction, err := zenbtc_spl_token.NewInitializeInstruction(
 		args,
 		signer,
 		globalConfigPDA,
@@ -35,7 +35,10 @@ func Initialize(
 		wrappedMetadataPDA,
 		solana.TokenMetadataProgramID,
 		solana.SysVarRentPubkey,
-	).Build()
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return instruction, nil
 }
@@ -53,8 +56,8 @@ func WrapZenzec(
 	feeWalletAta solana.PublicKey,
 	receiver solana.PublicKey,
 	receiverAta solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -91,8 +94,8 @@ func WrapZenbtc2(
 	feeWalletAta solana.PublicKey,
 	receiver solana.PublicKey,
 	receiverAta solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -129,8 +132,8 @@ func WrapRock(
 	feeWalletAta solana.PublicKey,
 	receiver solana.PublicKey,
 	receiverAta solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -169,9 +172,9 @@ func buildWrapInstruction(
 	receiverAta solana.PublicKey,
 	eventStoreGlobalConfig solana.PublicKey,
 	wrapShard solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
+) (solana.Instruction, error) {
 
-	builder := zenbtc_spl_token.NewWrapInstruction(
+	instruction, err := zenbtc_spl_token.NewWrapInstruction(
 		args,
 		signer,
 		globalConfigPDA,
@@ -189,15 +192,6 @@ func buildWrapInstruction(
 		programID,
 		wrapShard,
 	)
-
-	if account := builder.GetGlobalConfigAccount(); account != nil {
-		account.WRITE()
-	}
-	if account := builder.GetZenbtcWrapShardAccount(); account != nil {
-		account.WRITE()
-	}
-
-	instruction, err := builder.ValidateAndBuild()
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +209,8 @@ func UnwrapZenzec(
 	mint solana.PublicKey,
 	multisigKey solana.PublicKey,
 	feeWallet solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -249,8 +243,8 @@ func UnwrapZenbtc2(
 	mint solana.PublicKey,
 	multisigKey solana.PublicKey,
 	feeWallet solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -283,8 +277,8 @@ func UnwrapRock(
 	mint solana.PublicKey,
 	multisigKey solana.PublicKey,
 	feeWallet solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
-	zenbtc_spl_token.SetProgramID(programID)
+) (solana.Instruction, error) {
+	zenbtc_spl_token.ProgramID = programID
 
 	if eventID == nil {
 		return nil, fmt.Errorf("eventID is required")
@@ -319,12 +313,12 @@ func buildUnwrapInstruction(
 	feeWallet solana.PublicKey,
 	eventStoreGlobalConfig solana.PublicKey,
 	unwrapShard solana.PublicKey,
-) (*zenbtc_spl_token.Instruction, error) {
+) (solana.Instruction, error) {
 
 	signerAta, _, _ := solana.FindAssociatedTokenAddress(signer, mint)
 	feeWalletAta, _, _ := solana.FindAssociatedTokenAddress(feeWallet, mint)
 
-	builder := zenbtc_spl_token.NewUnwrapInstruction(
+	instruction, err := zenbtc_spl_token.NewUnwrapInstruction(
 		args,
 		signer,
 		globalConfigPDA,
@@ -341,12 +335,6 @@ func buildUnwrapInstruction(
 		programID,
 		unwrapShard,
 	)
-
-	if account := builder.GetZenbtcUnwrapShardAccount(); account != nil {
-		account.WRITE()
-	}
-
-	instruction, err := builder.ValidateAndBuild()
 	if err != nil {
 		return nil, err
 	}
