@@ -85,7 +85,7 @@ func fetchSolanaMintCounter(t *testing.T, ctx context.Context, client *solanarpc
 	require.NotEmpty(t, data)
 
 	decoder := bin.NewBorshDecoder(data)
-	account := new(zenbtc_spl_token.GlobalConfigAccount)
+	account := new(zenbtc_spl_token.GlobalConfig)
 	require.NoError(t, account.UnmarshalWithDecoder(decoder))
 
 	return account.MintCounter.BigInt()

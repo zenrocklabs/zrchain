@@ -11,25 +11,25 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func GetGlobalConfig(context context.Context, client *rpc.Client, programID solana.PublicKey) (zenbtc_spl_token.GlobalConfigAccount, error) {
+func GetGlobalConfig(context context.Context, client *rpc.Client, programID solana.PublicKey) (zenbtc_spl_token.GlobalConfig, error) {
 	globalConfigPDA, err := GetGlobalConfigPDA(programID)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return zenbtc_spl_token.GlobalConfig{}, err
 	}
 
 	accountInfo, err := GetAccountInfo(context, client, globalConfigPDA)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return zenbtc_spl_token.GlobalConfig{}, err
 	}
 
 	data := accountInfo.Value.Data.GetBinary()
 
-	globalConfig := new(zenbtc_spl_token.GlobalConfigAccount)
+	globalConfig := new(zenbtc_spl_token.GlobalConfig)
 	decoder := bin.NewBorshDecoder(data)
 
 	err = globalConfig.UnmarshalWithDecoder(decoder)
 	if err != nil {
-		return zenbtc_spl_token.GlobalConfigAccount{}, err
+		return zenbtc_spl_token.GlobalConfig{}, err
 	}
 
 	return *globalConfig, nil
