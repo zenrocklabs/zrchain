@@ -63,7 +63,6 @@ func (k *Keeper) processDCTMintsSolana(ctx sdk.Context, oracleData OracleData) {
 
 		nonceAccount := oracleData.SolanaMintNonces[solParams.NonceAccountKey]
 		if nonceAccount == nil {
-			k.Logger(ctx).Error("missing nonce account for asset", "asset", asset.String(), "nonce_account_key", solParams.NonceAccountKey)
 			continue
 		}
 
