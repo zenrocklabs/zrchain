@@ -1964,6 +1964,33 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		"event_id", eventID.String(),
 	)
 
+	// Derive PDAs for logging
+	var globalConfigPDA solana.PublicKey
+	var eventStoreGlobalConfig solana.PublicKey
+	var wrapShard solana.PublicKey
+
+	switch req.assetName {
+	case "ZENBTC":
+		globalConfigPDA, _ = solzenbtc.GetGlobalConfigPDA(programID)
+		eventStoreGlobalConfig, _ = solzenbtc.GetEventStoreGlobalConfigPDA(eventStoreProgramPub)
+		wrapShard, _ = solzenbtc.GetEventStoreZenbtc2WrapShardPDA(eventStoreProgramPub, eventID)
+	case "ROCK":
+		globalConfigPDA, _ = solzenbtc.GetGlobalConfigPDA(programID)
+		eventStoreGlobalConfig, _ = solzenbtc.GetEventStoreGlobalConfigPDA(eventStoreProgramPub)
+		wrapShard, _ = solzenbtc.GetEventStoreRockWrapShardPDA(eventStoreProgramPub, eventID)
+	default: // ZenZEC and others
+		globalConfigPDA, _ = solzenbtc.GetGlobalConfigPDA(programID)
+		eventStoreGlobalConfig, _ = solzenbtc.GetEventStoreGlobalConfigPDA(eventStoreProgramPub)
+		wrapShard, _ = solzenbtc.GetEventStoreZenzecWrapShardPDA(eventStoreProgramPub, eventID)
+	}
+
+	k.Logger(ctx).Info("Derived PDAs for wrap instruction",
+		"asset", req.assetName,
+		"globalConfigPDA", globalConfigPDA.String(),
+		"eventStoreGlobalConfig", eventStoreGlobalConfig.String(),
+		"wrapShard", wrapShard.String(),
+	)
+
 	wrapInstruction, err := buildSolanaWrapInstruction(
 		req.assetName,
 		programID,
@@ -1996,6 +2023,7 @@ func (k Keeper) PrepareSolanaMintTx(goCtx context.Context, req *solanaMintTxRequ
 		"recipientWalletPubKey", recipientPubKey.String(),
 		"receiverAta", receiverAta.String(),
 		"mint_counter", req.mintCounter,
+		"eventStoreProgramID", eventStoreProgramPub.String(),
 	)
 
 	tx, err := solana.NewTransaction(
